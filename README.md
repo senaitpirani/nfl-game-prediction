@@ -42,6 +42,20 @@ The home team wins about 57% of games historically, so the best model adds a mod
 
 The full write-up is in [`report/final_report.pdf`](report/final_report.pdf).
 
+## Limitations and next steps
+
+- **`home_is_favorite` is always 0 (known bug).** The feature compares `team_favorite_id`, an abbreviation such as `KC`, with `team_home`, a full name such as `Kansas City Chiefs`, so the two never match. The model therefore gets no information from it, which is why its SHAP importance is exactly zero. The fix is to map team names to IDs with `data/nfl_teams.csv` before comparing:
+  ```python
+  teams = pd.read_csv('../data/nfl_teams.csv')
+  name_to_id = dict(zip(teams.team_name, teams.team_id))
+  sports_data['home_is_favorite'] = (
+      sports_data['team_home'].map(name_to_id) == sports_data['team_favorite_id']
+  ).astype(int)
+  ```
+  The point spread still carries most of the betting-market signal, so results should shift only modestly once this is fixed.
+- **Small playoff sample.** The test set has only 39 playoff games, so the RQ3 comparisons are noisy.
+- **Possible leakage from betting variables.** The point spread reflects market expectations and may encode information the other features lack, which makes the features harder to interpret.
+
 ## Repository layout
 
 ```
